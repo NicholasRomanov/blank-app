@@ -1,14 +1,11 @@
 import streamlit as st
 
-# Define the menu items
-menu_items = {
-    "Burgers": ["Big Mac", "Quarter Pounder", "McChicken"],
-    "Drinks": ["Coca-Cola", "Sprite", "Iced Tea"],
-    "Desserts": ["Apple Pie", "Sundae", "McFlurry"]
-}
+# Initialize an empty order list in session state
+if 'order' not in st.session_state:
+    st.session_state.order = []
 
 # Set up the sidebar for navigation
-st.sidebar.title("Menu Mekdi")
+st.sidebar.title("McDonald's Menu")
 selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
 # Display the selected category
@@ -16,6 +13,14 @@ st.title(selected_category)
 
 # Display the items in the selected category
 for item in menu_items[selected_category]:
-    quantity = st.number_input(f"Select quantity for {item}", min_value=0)
-    if st.button(f"Order {item}"):
-        st.success(f"You have ordered {quantity} {item}(s).")
+    if st.button(f"Add {item} to Order"):
+        st.session_state.order.append(item)
+        st.success(f"{item} has been added to your order.")
+
+# Show the current order
+st.sidebar.header("Your Order")
+if st.session_state.order:
+    for ordered_item in st.session_state.order:
+        st.sidebar.write(ordered_item)
+else:
+    st.sidebar.write("Your order is empty.")
