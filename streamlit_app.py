@@ -32,6 +32,10 @@ for item in menu_items[selected_category]:
 st.sidebar.header("Your Order")
 if st.session_state.order:
     for ordered_item, quantity in st.session_state.order.items():
-        st.sidebar.write(f"{ordered_item} {quantity}x")
+        col1, col2 = st.sidebar.columns([2, 1])  # Create two columns in the sidebar
+        col1.write(f"{ordered_item} {quantity}x")  # Display the item and quantity
+        if col2.button(f"Remove {ordered_item}"):  # Button to remove the item
+            del st.session_state.order[ordered_item]  # Remove the item from the order
+            st.success(f"{ordered_item} has been removed from your order.")
 else:
     st.sidebar.write("Your order is empty.")
