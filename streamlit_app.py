@@ -1,5 +1,12 @@
 import streamlit as st
 
+# Define the menu items
+menu_items = {
+    "Burgers": ["Big Mac", "Quarter Pounder", "McChicken"],
+    "Drinks": ["Coca-Cola", "Sprite", "Iced Tea"],
+    "Desserts": ["Apple Pie", "Sundae", "McFlurry"]
+}
+
 # Initialize an empty order list in session state
 if 'order' not in st.session_state:
     st.session_state.order = []
