@@ -28,8 +28,10 @@ for item in menu_items[selected_category]:
             st.session_state.order[item] = 1
         st.success(f"{item} has been added to your order.")
 
-# Show the current order
+# Debugging: Print the current order state
 st.sidebar.header("Your Order")
+st.sidebar.write(st.session_state.order)  # Print the current state of the order
+
 if st.session_state.order:
     for ordered_item, quantity in st.session_state.order.items():
         col1, col2 = st.sidebar.columns([2, 1])  # Create two columns in the sidebar
