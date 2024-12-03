@@ -27,5 +27,3 @@ if selected == "Burgers":
     quantity = st.number_input("Select quantity for Big Mac", min_value=0)
     if st.button("Order Big Mac"):
         st.success(f"You have ordered {quantity} Big Mac(s).")
-
-streamlit run app.py
