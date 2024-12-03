@@ -33,4 +33,5 @@ st.sidebar.header("Your Order")
 if st.session_state.order:
     for ordered_item, quantity in st.session_state.order.items():
         st.sidebar.write(f"{ordered_item} {quantity}x")
- ⬤
+else:
+    st.sidebar.write("Your order is empty.")
