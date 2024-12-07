@@ -1,52 +1,52 @@
 import streamlit as st
 
 # Define the menu items
-menu_items = {
+menu = {
     "Burgers": ["Big Mac", "Quarter Pounder", "McChicken"],
     "Drinks": ["Coca-Cola", "Sprite", "Iced Tea"],
-    "Desserts": ["Apple Pie", "Sundae", "McFlurry"]
+    "Desserts": ["Apple Pie", "Sundae", "McFlurry"],
 }
 
-# Initialize session state for order
-if 'order' not in st.session_state:
+# Initialize session state for order management
+if "order" not in st.session_state:
     st.session_state.order = {}
 
-# Function to add item to the order
-def add_to_order(item):
+# Function to add an item to the order
+def add_item(item):
     if item in st.session_state.order:
         st.session_state.order[item] += 1
     else:
         st.session_state.order[item] = 1
 
-# Function to remove item from the order
-def decrement_or_remove_item(item):
+# Function to remove or decrement an item in the order
+def remove_item(item):
     if item in st.session_state.order:
         if st.session_state.order[item] > 1:
             st.session_state.order[item] -= 1
         else:
             del st.session_state.order[item]
 
-# Sidebar for navigation
+# Sidebar: Menu categories
 st.sidebar.title("McDonald's Menu")
-selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
+category = st.sidebar.radio("Select a category:", menu.keys())
 
-# Main menu display
-st.title(f"Menu - {selected_category}")
-for item in menu_items[selected_category]:
-    col1, col2 = st.columns([4, 1])  # Layout for item and button
+# Main Area: Display items in the selected category
+st.title(f"Menu - {category}")
+for item in menu[category]:
+    col1, col2 = st.columns([4, 1])
     col1.write(item)
-    if col2.button(f"Add", key=f"add_{item}"):
-        add_to_order(item)
+    if col2.button("Add", key=f"add_{item}"):
+        add_item(item)
 
-# Sidebar order summary
+# Sidebar: Order summary
 st.sidebar.header("Your Order")
 if st.session_state.order:
-    for item, quantity in list(st.session_state.order.items()):
-        col1, col2, col3 = st.sidebar.columns([2, 1, 1])
+    for item, quantity in st.session_state.order.items():
+        col1, col2, col3 = st.sidebar.columns([3, 1, 1])
         col1.write(f"{item} ({quantity})")
         if col2.button("+", key=f"inc_{item}"):
-            add_to_order(item)
+            add_item(item)
         if col3.button("-", key=f"dec_{item}"):
-            decrement_or_remove_item(item)
+            remove_item(item)
 else:
     st.sidebar.write("Your order is empty.")
