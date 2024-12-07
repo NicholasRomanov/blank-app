@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 # Define the menu items
@@ -37,7 +36,7 @@ for item in menu[category]:
     col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
     col1.write(item)
     
-    # Display quantity or default to 0 if the item isn't in the order
+    # Get the current quantity of the item or default to 0
     quantity = st.session_state.order.get(item, 0)
     col2.write(f"Quantity: {quantity}")
     
@@ -49,7 +48,7 @@ for item in menu[category]:
     if col4.button("-", key=f"dec_{item}"):
         remove_item(item)
 
-# Sidebar: Order summary
+# Sidebar: Order summary with synchronized quantities
 st.sidebar.header("Your Order")
 if st.session_state.order:
     for item, quantity in st.session_state.order.items():
