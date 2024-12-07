@@ -26,11 +26,29 @@ def remove_from_order(item):
         else:
             del st.session_state.order[item]
 
-# Set up the sidebar for navigation
+# Sidebar for menu navigation
 st.sidebar.title("McDonald's Menu")
 selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
 # Display the selected category
 st.title(selected_category)
 
-# Display the it
+# Display items and add buttons
+for item in menu_items[selected_category]:
+    col1, col2 = st.columns([3, 1])
+    col1.write(item)
+    if col2.button(f"Add {item}", key=f"add_{item}"):
+        add_to_order(item)
+
+# Sidebar order display with quantity controls
+st.sidebar.header("Your Order")
+if st.session_state.order:
+    for ordered_item, quantity in list(st.session_state.order.items()):
+        col1, col2, col3 = st.sidebar.columns([2, 1, 1])
+        col1.write(f"{ordered_item}: {quantity}x")
+        if col2.button("+", key=f"inc_{ordered_item}"):
+            add_to_order(ordered_item)
+        if col3.button("-", key=f"dec_{ordered_item}"):
+            remove_from_order(ordered_item)
+else:
+    st.sidebar.write("Your order is empty.")
