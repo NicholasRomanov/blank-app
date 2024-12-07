@@ -1,3 +1,4 @@
+
 import streamlit as st
 
 # Define the menu items
@@ -30,23 +31,28 @@ def remove_item(item):
 st.sidebar.title("McDonald's Menu")
 category = st.sidebar.radio("Select a category:", menu.keys())
 
-# Main Area: Display items in the selected category
+# Main Area: Display items in the selected category with quantity controls
 st.title(f"Menu - {category}")
 for item in menu[category]:
-    col1, col2 = st.columns([4, 1])
+    col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
     col1.write(item)
-    if col2.button("Add", key=f"add_{item}"):
+    
+    # Display quantity or default to 0 if the item isn't in the order
+    quantity = st.session_state.order.get(item, 0)
+    col2.write(f"Quantity: {quantity}")
+    
+    # "+" button to add to order
+    if col3.button("+", key=f"inc_{item}"):
         add_item(item)
+    
+    # "-" button to decrement from order
+    if col4.button("-", key=f"dec_{item}"):
+        remove_item(item)
 
 # Sidebar: Order summary
 st.sidebar.header("Your Order")
 if st.session_state.order:
     for item, quantity in st.session_state.order.items():
-        col1, col2, col3 = st.sidebar.columns([3, 1, 1])
-        col1.write(f"{item} ({quantity})")
-        if col2.button("+", key=f"inc_{item}"):
-            add_item(item)
-        if col3.button("-", key=f"dec_{item}"):
-            remove_item(item)
+        st.sidebar.write(f"{item}: {quantity}")
 else:
     st.sidebar.write("Your order is empty.")
