@@ -32,6 +32,8 @@ category = st.sidebar.radio("Select a category:", menu.keys())
 
 # Main Area: Display items in the selected category with quantity controls
 st.title(f"Menu - {category}")
+
+# Synchronize and render menu items with quantities
 for item in menu[category]:
     col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
     col1.write(item)
@@ -43,10 +45,12 @@ for item in menu[category]:
     # "+" button to add to order
     if col3.button("+", key=f"inc_{item}"):
         add_item(item)
+        st.experimental_rerun()  # Force the UI to update immediately
     
     # "-" button to decrement from order
     if col4.button("-", key=f"dec_{item}"):
         remove_item(item)
+        st.experimental_rerun()  # Force the UI to update immediately
 
 # Sidebar: Order summary with synchronized quantities
 st.sidebar.header("Your Order")
