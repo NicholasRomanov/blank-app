@@ -1,19 +1,21 @@
 import streamlit as st
 import os
 
-# Define the folder containing the images
+st.title("Selamat datang Di Burger Bangor")
+
+# ini buat folder gambar
 img_folder = os.path.join(os.getcwd(), "Img")
 
-# Banner setup: Define the path to the banner image
+# ini gambar banner
 banner_path = os.path.join(img_folder, "BurgerBanner.jpg")
 
-# Display the banner at the top
+# letak banner
 if os.path.exists(banner_path):  # Check if the banner image exists
     st.image(banner_path, use_container_width=True)
 else:
     st.error("Banner image not found!")
 
-# Define the menu items with corresponding image filenames
+# isi menu ama gambarnya
 menu_items = {
     "Burgers": {
         "Classic Burger": "Burger.png",
@@ -38,25 +40,25 @@ menu_items = {
     }
 }
 
-# Initialize an empty order dictionary in session state
+# ini tempat order kosong
 if 'order' not in st.session_state:
     st.session_state.order = {}
 
-# Set up the sidebar for navigation
+# navigasi sidebar
 st.sidebar.title("McDonald's Menu")
 selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
-# Display the selected category
+# category barang
 st.title(selected_category)
 
-# Display the items in the selected category with images
+# ni ngedisplay nama file ama gabar nya
 for item, image_file in menu_items[selected_category].items():
-    # Construct the full image path
+    # ini folder path gambar menu
     image_path = os.path.join(img_folder, image_file)
-    col1, col2 = st.columns([1, 3])  # Create columns for layout
+    col1, col2 = st.columns([1, 3])  # layoutnya
     with col1:
-        if os.path.exists(image_path):  # Check if the image exists
-            st.image(image_path, width=100)  # Display the item image
+        if os.path.exists(image_path):  # check gambar
+            st.image(image_path, width=100)  # display
         else:
             st.error(f"Image for {item} not found!")
     with col2:
@@ -65,21 +67,21 @@ for item, image_file in menu_items[selected_category].items():
             st.session_state.order[item] = st.session_state.order.get(item, 0) + 1
             st.success(f"{item} has been added to your order!")
 
-# Show the current order
+# ngasih liat order di sidebar
 st.sidebar.header("Your Order")
 if st.session_state.order:
-    items_to_remove = []  # Temporary list to track items to remove
+    items_to_remove = []  # list sementara buat diapus
     for ordered_item, quantity in st.session_state.order.items():
         col1, col2 = st.sidebar.columns([2, 1])
         col1.write(f"{ordered_item} {quantity}x")
-        if col2.button(f"Remove {ordered_item}", key=f"remove_{ordered_item}"):
-            items_to_remove.append(ordered_item)  # Mark the item for removal
+        if col2.button(f"Remove", key=f"remove"):
+            items_to_remove.append(ordered_item)  # ini buat remove item
 
-    # Remove the marked items from the order
+    # buat ngapus order
     for item in items_to_remove:
         del st.session_state.order[item]
 
-    # Display a message if the order becomes empty
+    # kalo koson ini keluar
     if not st.session_state.order:
         st.sidebar.write("Your cart is now empty.")
 else:
