@@ -33,15 +33,15 @@ menu_items = {
     "Drinks": {
         "Coca-Cola": "CocaCola.png",
         "Sprite": "Sprite.png",
-        "Lemon Tea": "IcedTea.png",
+        "Lemon Tea": "LemonTea.png",
         "Milo": "Milo.png",
         "Aer putih": "Aer.png"
     },
     "Snacks": {
-        "Kebab": "kebab.png",
+        "Kebab": "Kebab.png",
         "Nugget": "Nugget.png",
-        "Nugget (L)": "LNugget.png",
-        "Salad": "salad.png",
+        "Nugget (L)": "Lnugget.png",
+        "Salad": "Salad.png",
         "Chicken Wings": "Wing.png"
     }
 }
