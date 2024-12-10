@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 from openpyxl import Workbook
+from datetime import datetime
 
 st.title("Selamat datang Di Burger Bangor")
 
@@ -98,23 +99,41 @@ if st.sidebar.button("Order Now"):
     if st.session_state.order:
         # Prepare the data for the Excel file
         order_data = [{"Item": item, "Quantity": quantity} for item, quantity in st.session_state.order.items()]
+        # Add an order ID or timestamp to the data
+        order_id = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for row in order_data:
+            row["Order ID"] = order_id  # Assign the same order ID to all items in this order
+
+        # Convert to DataFrame
         df = pd.DataFrame(order_data)
 
-        # File path to save the Excel file
-        file_path = os.path.join(os.getcwd(), "Order.xlsx")
-
-        # Remove any existing corrupted files
-        if os.path.exists(file_path):
-            os.remove(file_path)
-
         try:
-            # Save the data to an Excel file
-            df.to_excel(file_path, index=False, engine="openpyxl")
+            if os.path.exists(excel_file_path):
+                # Append to the existing Excel file
+                with pd.ExcelWriter(excel_file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                    startrow = writer.sheets['Sheet1'].max_row  # Find the last row in the existing sheet
+                    df.to_excel(writer, index=False, header=False, startrow=startrow)  # Append without headers
+            else:
+                # Create a new Excel file if it doesn't exist
+                with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
+                    # Write with headers for a new file
+                    df.to_excel(writer, index=False)
 
-            # Notify the user and provide a download link
-            st.sidebar.success("Your order has been placed!")
-            st.sidebar.markdown(f"[Download Order Excel File](Order.xlsx)")
         except Exception as e:
-            st.sidebar.error(f"Failed to save order: {e}")
+            # Handle corrupted or invalid file
+            st.error(f"An error occurred: {e}. Creating a new Orders.xlsx file.")
+            # Create a new file
+            wb = Workbook()
+            wb.save(excel_file_path)
+            with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False)
+
+        # Notify the user
+        st.sidebar.success("Your order has been placed and saved!")
+        st.sidebar.markdown(f"[Download Orders Excel File](Orders.xlsx)")
+
+        # Clear the current order
+        st.session_state.order = {}
+
     else:
         st.sidebar.warning("Your cart is empty. Please add items before ordering.")
