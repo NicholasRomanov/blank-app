@@ -46,25 +46,25 @@ menu_items = {
     }
 }
 
-# Initialize an empty order dictionary in session state
+# order kosong
 if 'order' not in st.session_state:
     st.session_state.order = {}
 
-# Sidebar navigation
+# sidebar menu
 st.sidebar.title("McDonald's Menu")
 selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
-# Display the selected category as a title
+# kategori makanan jadi title
 st.subheader(f"Category: {selected_category}")
 
-# Display the items in the selected category with images
+# display makanan pake gambar
 for item, image_file in menu_items[selected_category].items():
-    # Construct the full image path
+    # path gambar
     image_path = os.path.join(img_folder, image_file)
-    col1, col2 = st.columns([1, 3])  # Create columns for layout
+    col1, col2 = st.columns([1, 3])  #layout kolom
     with col1:
-        if os.path.exists(image_path):  # Check if the image exists
-            st.image(image_path, width=100)  # Display the item image
+        if os.path.exists(image_path):  # cek gambar ada ga
+            st.image(image_path, width=100)  # nampilin gambar
         else:
             st.error(f"Image for {item} not found!")
     with col2:
@@ -73,22 +73,22 @@ for item, image_file in menu_items[selected_category].items():
             st.session_state.order[item] = st.session_state.order.get(item, 0) + 1
             st.success(f"{item} has been added to your order!")
 
-# Sidebar order section
+# order di sidebar
 st.sidebar.header("Your Order")
 if st.session_state.order:
     st.sidebar.subheader("Current Items:")
-    items_to_remove = []  # Temporary list to track items to remove
+    items_to_remove = []  # list buat apus order
     for ordered_item, quantity in st.session_state.order.items():
         col1, col2 = st.sidebar.columns([2, 1])
         col1.write(f"{ordered_item} {quantity}x")
         if col2.button(f"Remove {ordered_item}", key=f"remove_{ordered_item}"):
-            items_to_remove.append(ordered_item)  # Mark the item for removal
+            items_to_remove.append(ordered_item)  # buat marking apus order
 
-    # Remove the marked items from the order
+    # yang kena marking diapus
     for item in items_to_remove:
         del st.session_state.order[item]
 
-    # Display a message if the order becomes empty
+    # kalo order kosong ini
     if not st.session_state.order:
         st.sidebar.write("Your cart is now empty.")
 else:
