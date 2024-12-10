@@ -4,7 +4,7 @@ import pandas as pd
 from openpyxl import Workbook
 from datetime import datetime
 
-st.title("Selamat datang Di Burger Bangor")
+st.title("Selamat datang Di Burger Hawktuah")
 
 # ini buat folder gambar
 img_folder = os.path.join(os.getcwd(), "Img")
