@@ -80,8 +80,10 @@ if st.session_state.order:
     for ordered_item, quantity in st.session_state.order.items():
         col1, col2 = st.sidebar.columns([2, 1])
         col1.write(f"{ordered_item} {quantity}x")
-        if col2.button(f"Remove", key=f"remove"):
-            items_to_remove.append(ordered_item)  # ini buat remove item
+
+        if col2.button("Remove", key=f"remove-{ordered_item}"):  
+            del st.session_state.order[ordered_item]  # Remove the item from the order
+            st.success(f"{ordered_item} has been removed from your order.")
 
     # buat ngapus order
     for item in items_to_remove:
