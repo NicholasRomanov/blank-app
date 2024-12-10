@@ -1,11 +1,15 @@
 import streamlit as st
 import os
 import pandas as pd
+from openpyxl import Workbook
 
 st.title("Selamat datang Di Burger Bangor")
 
 # ini buat folder gambar
 img_folder = os.path.join(os.getcwd(), "Img")
+
+# folder excel
+excel_file_path = os.path.join(os.getcwd(), "Order.xlsx")
 
 # ini gambar banner
 banner_path = os.path.join(img_folder, "BurgerBanner.jpg")
@@ -96,19 +100,21 @@ if st.sidebar.button("Order Now"):
         order_data = [{"Item": item, "Quantity": quantity} for item, quantity in st.session_state.order.items()]
         df = pd.DataFrame(order_data)
 
-        # Check if the file exists
-        if os.path.exists("Order.xlsx"):
-            # Append to the existing Excel file
-            with pd.ExcelWriter("Order.xlsx", engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-                startrow = writer.sheets['Sheet1'].max_row  # Find the last row in the existing sheet
-                df.to_excel(writer, index=False, header=False, startrow=startrow)  # Append without headers
-        else:
-            # Create a new file if it doesn't exist
-            with pd.ExcelWriter("Order.xlsx", engine='openpyxl') as writer:
-                df.to_excel(writer, index=False)
+        # File path to save the Excel file
+        file_path = os.path.join(os.getcwd(), "Order.xlsx")
 
-        # Notify the user
-        st.sidebar.success("Your order has been placed and saved!")
-        st.sidebar.markdown(f"[Download Orders Excel File](Orders.xlsx)")
+        # Remove any existing corrupted files
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        try:
+            # Save the data to an Excel file
+            df.to_excel(file_path, index=False, engine="openpyxl")
+
+            # Notify the user and provide a download link
+            st.sidebar.success("Your order has been placed!")
+            st.sidebar.markdown(f"[Download Order Excel File](Order.xlsx)")
+        except Exception as e:
+            st.sidebar.error(f"Failed to save order: {e}")
     else:
         st.sidebar.warning("Your cart is empty. Please add items before ordering.")
