@@ -51,7 +51,7 @@ if 'order' not in st.session_state:
     st.session_state.order = {}
 
 # navigasi sidebar
-st.sidebar.title("McDonald's Menu")
+st.sidebar.title("Menu List")
 selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
 # category barang
