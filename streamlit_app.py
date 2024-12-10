@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import pandas as pd
 
 st.title("Selamat datang Di Burger Bangor")
 
@@ -40,25 +41,25 @@ menu_items = {
     }
 }
 
-# ini tempat order kosong
+# Initialize an empty order dictionary in session state
 if 'order' not in st.session_state:
     st.session_state.order = {}
 
-# navigasi sidebar
+# Sidebar navigation
 st.sidebar.title("McDonald's Menu")
 selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
-# category barang
-st.title(selected_category)
+# Display the selected category as a title
+st.subheader(f"Category: {selected_category}")
 
-# ni ngedisplay nama file ama gabar nya
+# Display the items in the selected category with images
 for item, image_file in menu_items[selected_category].items():
-    # ini folder path gambar menu
+    # Construct the full image path
     image_path = os.path.join(img_folder, image_file)
-    col1, col2 = st.columns([1, 3])  # layoutnya
+    col1, col2 = st.columns([1, 3])  # Create columns for layout
     with col1:
-        if os.path.exists(image_path):  # check gambar
-            st.image(image_path, width=100)  # display
+        if os.path.exists(image_path):  # Check if the image exists
+            st.image(image_path, width=100)  # Display the item image
         else:
             st.error(f"Image for {item} not found!")
     with col2:
@@ -67,22 +68,47 @@ for item, image_file in menu_items[selected_category].items():
             st.session_state.order[item] = st.session_state.order.get(item, 0) + 1
             st.success(f"{item} has been added to your order!")
 
-# ngasih liat order di sidebar
+# Sidebar order section
 st.sidebar.header("Your Order")
 if st.session_state.order:
-    items_to_remove = []  # list sementara buat diapus
+    st.sidebar.subheader("Current Items:")
+    items_to_remove = []  # Temporary list to track items to remove
     for ordered_item, quantity in st.session_state.order.items():
         col1, col2 = st.sidebar.columns([2, 1])
         col1.write(f"{ordered_item} {quantity}x")
-        if col2.button(f"Remove", key=f"remove"):
-            items_to_remove.append(ordered_item)  # ini buat remove item
+        if col2.button(f"Remove {ordered_item}", key=f"remove_{ordered_item}"):
+            items_to_remove.append(ordered_item)  # Mark the item for removal
 
-    # buat ngapus order
+    # Remove the marked items from the order
     for item in items_to_remove:
         del st.session_state.order[item]
 
-    # kalo koson ini keluar
+    # Display a message if the order becomes empty
     if not st.session_state.order:
         st.sidebar.write("Your cart is now empty.")
 else:
-    st.sidebar.write("Your cart is empty. Start adding items!")
+    st.sidebar.subheader("Your cart is empty. Start adding items!")
+
+# Order Now button
+if st.sidebar.button("Order Now"):
+    if st.session_state.order:
+        # Prepare the data for the Excel file
+        order_data = [{"Item": item, "Quantity": quantity} for item, quantity in st.session_state.order.items()]
+        df = pd.DataFrame(order_data)
+
+        # Check if the file exists
+        if os.path.exists(Order.xlsx):
+            # Append to the existing Excel file
+            with pd.ExcelWriter(Order.xlsx, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                startrow = writer.sheets['Sheet1'].max_row  # Find the last row in the existing sheet
+                df.to_excel(writer, index=False, header=False, startrow=startrow)  # Append without headers
+        else:
+            # Create a new file if it doesn't exist
+            with pd.ExcelWriter(Order1.xlsx, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False)
+
+        # Notify the user
+        st.sidebar.success("Your order has been placed and saved!")
+        st.sidebar.markdown(f"[Download Orders Excel File](Orders.xlsx)")
+    else:
+        st.sidebar.warning("Your cart is empty. Please add items before ordering.")
