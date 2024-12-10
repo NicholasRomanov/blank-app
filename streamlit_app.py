@@ -97,14 +97,14 @@ if st.sidebar.button("Order Now"):
         df = pd.DataFrame(order_data)
 
         # Check if the file exists
-        if os.path.exists(Order.xlsx):
+        if os.path.exists("Order.xlsx"):
             # Append to the existing Excel file
-            with pd.ExcelWriter(Order.xlsx, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+            with pd.ExcelWriter("Order.xlsx", engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
                 startrow = writer.sheets['Sheet1'].max_row  # Find the last row in the existing sheet
                 df.to_excel(writer, index=False, header=False, startrow=startrow)  # Append without headers
         else:
             # Create a new file if it doesn't exist
-            with pd.ExcelWriter(Order1.xlsx, engine='openpyxl') as writer:
+            with pd.ExcelWriter("Order.xlsx", engine='openpyxl') as writer:
                 df.to_excel(writer, index=False)
 
         # Notify the user
