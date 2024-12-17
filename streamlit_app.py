@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import pandas as pd
-from openpyxl import load_workbook
 from datetime import datetime
 
 # --- Title ---
@@ -18,28 +17,28 @@ if os.path.exists(banner_path):
 else:
     st.error("Banner image not found!")
 
-# --- Menu Items and Images ---
+# --- Menu Items and Prices ---
 menu_items = {
     "Burgers": {
-        "Classic Burger": "Burger.png",
-        "Cheese Burger": "CheeseBurger.png",
-        "Chicken Burger": "ChickenBurger.png",
-        "Double Cheese Burger": "DoubleCheese.png",
-        "MEGA BURGER": "MEGABurger.png"
+        "Classic Burger": {"image": "Burger.png", "price": 12.000},
+        "Cheese Burger": {"image": "CheeseBurger.png", "price": 15.000},
+        "Chicken Burger": {"image": "ChickenBurger.png", "price": 12.000},
+        "Double Cheese Burger": {"image": "DoubleCheese.png", "price": 25.000},
+        "MEGA BURGER": {"image": "MEGABurger.png", "price": 40.000}
     },
     "Drinks": {
-        "Coca-Cola": "CocaCola.png",
-        "Sprite": "Sprite.png",
-        "Lemon Tea": "LemonTea.png",
-        "Milo": "Milo.png",
-        "Aer Putih": "Aer.png"
+        "Coca-Cola": {"image": "CocaCola.png", "price": 5.000},
+        "Sprite": {"image": "Sprite.png", "price": 5.000},
+        "Lemon Tea": {"image": "LemonTea.png", "price": 5.000},
+        "Milo": {"image": "Milo.png", "price": 5.000},
+        "Aer Putih": {"image": "Aer.png", "price": 2.500}
     },
     "Snacks": {
-        "Kebab": "Kebab.png",
-        "Nugget": "Nugget.png",
-        "Nugget (L)": "Lnugget.png",
-        "Salad": "Salad.png",
-        "Chicken Wings": "Wing.png"
+        "Kebab": {"image": "Kebab.png", "price": 16.000},
+        "Nugget": {"image": "Nugget.png", "price": 10.000},
+        "Nugget (L)": {"image": "Lnugget.png", "price": 18.000},
+        "Salad": {"image": "Salad.png", "price": 10.000},
+        "Chicken Wings": {"image": "Wing.png", "price": 18.000}
     }
 }
 
@@ -53,7 +52,10 @@ selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys(
 
 # --- Display Menu Category ---
 st.title(selected_category)
-for item, image_file in menu_items[selected_category].items():
+for item, item_data in menu_items[selected_category].items():
+    image_file = item_data["image"]
+    price = item_data["price"]
+    
     # Image path for each menu item
     image_path = os.path.join(img_folder, image_file)
     
@@ -65,28 +67,42 @@ for item, image_file in menu_items[selected_category].items():
         else:
             st.error(f"Image for {item} not found!")
     with col2:
-        st.write(f"**{item}**")
+        st.write(f"**{item}** - ${price:.3f}")
         if st.button(f"Add {item} to Order", key=f"add_{item}"):
             st.session_state.order[item] = st.session_state.order.get(item, 0) + 1
             st.success(f"{item} has been added to your order!")
 
 # --- Display Cart in Sidebar ---
 st.sidebar.header("Your Order")
+total_price = 0  # Initialize total price
+
 if st.session_state.order:
     for ordered_item, quantity in st.session_state.order.items():
-        col1, col2 = st.sidebar.columns([2, 1])
-        col1.write(f"{ordered_item} {quantity}x")
-        
-        # Button to remove an item
-        if col2.button("Remove", key=f"remove_{ordered_item}"):
-            del st.session_state.order[ordered_item]
-            st.experimental_rerun()
+        # Get item details (price, image)
+        for category, items in menu_items.items():
+            if ordered_item in items:
+                price = items[ordered_item]["price"]
+                item_total = price * quantity  # Calculate total price for this item
+                total_price += item_total  # Add to the overall total
+
+                # Display item name, quantity, and price in the sidebar
+                col1, col2 = st.sidebar.columns([2, 1])
+                col1.write(f"{ordered_item} {quantity}x")
+                col2.write(f"${item_total:.3f}")
+
+                # Button to remove an item
+                if col2.button("Remove", key=f"remove_{ordered_item}"):
+                    del st.session_state.order[ordered_item]
+                    st.experimental_rerun()
+
+    # Display total price above the "Order Now" button
+    st.sidebar.subheader(f"Total: ${total_price:.3f}")
 
     # Order button
     if st.sidebar.button("Place Order"):
         # Add order to Excel file
         order_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        order_data = [{"Item": item, "Quantity": quantity, "Time": order_time} for item, quantity in st.session_state.order.items()]
+        order_data = [{"Item": item, "Quantity": quantity, "Time": order_time, "Price": menu_items[category][item]["price"]} for item, quantity in st.session_state.order.items()]
 
         # Append to existing Excel file or create a new one
         if os.path.exists(excel_file_path):
@@ -97,8 +113,12 @@ if st.session_state.order:
 
         # Clear the cart
         st.session_state.order = {}
+        
+        # Show success message in the sidebar
         st.sidebar.success("Your order has been placed! Thank you!")
 
+        # Force a page refresh to simulate a new customer session
+        st.experimental_rerun()
 else:
     st.sidebar.write("Your cart is empty. Start adding items!")
 
