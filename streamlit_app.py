@@ -1,101 +1,107 @@
 import streamlit as st
-import pandas as pd
 import os
+import pandas as pd
 from openpyxl import load_workbook
 from datetime import datetime
 
-# Define the menu items (nested dictionaries with item names and image paths)
+# --- Title ---
+st.title("Selamat Datang di DELIS BURGER")
+
+# --- Define Image and Excel Directories ---
+img_folder = os.path.join(os.getcwd(), "Img")  # Folder for images
+excel_file_path = os.path.join(os.getcwd(), "Order.xlsx")  # Excel file for orders
+
+# --- Banner Image ---
+banner_path = os.path.join(img_folder, "Banner.jpg")
+if os.path.exists(banner_path):
+    st.image(banner_path, use_container_width=True)
+else:
+    st.error("Banner image not found!")
+
+# --- Menu Items and Images ---
 menu_items = {
     "Burgers": {
-        "Classic Burger": "images/Burger.png",
-        "Cheese Burger": "images/CheeseBurger.png",
-        "Chicken Burger": "images/ChickenBurger.png",
-        "Double Cheese Burger": "images/DoubleCheese.png",
-        "MEGA BURGER": "images/MEGABurger.png"
+        "Classic Burger": "Burger.png",
+        "Cheese Burger": "CheeseBurger.png",
+        "Chicken Burger": "ChickenBurger.png",
+        "Double Cheese Burger": "DoubleCheese.png",
+        "MEGA BURGER": "MEGABurger.png"
     },
     "Drinks": {
-        "Coca-Cola": "images/CocaCola.png",
-        "Sprite": "images/Sprite.png",
-        "Lemon Tea": "images/LemonTea.png",
-        "Milo": "images/Milo.png",
-        "Aer putih": "images/Aer.png"
+        "Coca-Cola": "CocaCola.png",
+        "Sprite": "Sprite.png",
+        "Lemon Tea": "LemonTea.png",
+        "Milo": "Milo.png",
+        "Aer Putih": "Aer.png"
     },
     "Snacks": {
-        "Kebab": "images/Kebab.png",
-        "Nugget": "images/Nugget.png",
-        "Nugget (L)": "images/Lnugget.png",
-        "Salad": "images/Salad.png",
-        "Chicken Wings": "images/Wing.png"
+        "Kebab": "Kebab.png",
+        "Nugget": "Nugget.png",
+        "Nugget (L)": "Lnugget.png",
+        "Salad": "Salad.png",
+        "Chicken Wings": "Wing.png"
     }
 }
 
-# Initialize order in session state
+# --- Initialize Order State ---
 if 'order' not in st.session_state:
     st.session_state.order = {}
 
-# Banner
-st.image("images/Banner.jpg", use_container_width=True)
-st.title("Welcome to McDonald's App")
+# --- Sidebar Navigation ---
+st.sidebar.title("Menu List")
+selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
-# Sidebar for Navigation
-st.sidebar.title("Menu Categories")
-selected_category = st.sidebar.radio("Choose a category:", list(menu_items.keys()))
-
-# Display selected category items with images and buttons
-st.header(f"{selected_category}")  # Header for the selected category
-for item, img_path in menu_items[selected_category].items():
-    col1, col2 = st.columns([1, 3])  # Two columns: image and text/button
+# --- Display Menu Category ---
+st.title(selected_category)
+for item, image_file in menu_items[selected_category].items():
+    # Image path for each menu item
+    image_path = os.path.join(img_folder, image_file)
     
+    # Layout with columns
+    col1, col2 = st.columns([1, 3])
     with col1:
-        st.image(img_path, width=100)  # Display the item's image
-    
+        if os.path.exists(image_path):
+            st.image(image_path, width=100)
+        else:
+            st.error(f"Image for {item} not found!")
     with col2:
-        st.write(f"**{item}**")  # Display the item name in bold
-        if st.button(f"Add {item}", key=f"add-{item}"):  # Unique key for each button
-            if item in st.session_state.order:
-                st.session_state.order[item] += 1  # Increment quantity
-            else:
-                st.session_state.order[item] = 1  # Add item to order
-            st.success(f"{item} has been added to your order.")
+        st.write(f"**{item}**")
+        if st.button(f"Add {item} to Order", key=f"add_{item}"):
+            st.session_state.order[item] = st.session_state.order.get(item, 0) + 1
+            st.success(f"{item} has been added to your order!")
 
-# Sidebar: Display current order and removal buttons
+# --- Display Cart in Sidebar ---
 st.sidebar.header("Your Order")
 if st.session_state.order:
-    for ordered_item, quantity in list(st.session_state.order.items()):
-        col1, col2 = st.sidebar.columns([2, 1])  # Two columns for displaying and removing
-        col1.write(f"{ordered_item} x{quantity}")  # Display item and quantity
-        if col2.button("Remove", key=f"remove-{ordered_item}"):  # Unique key for removal
-            del st.session_state.order[ordered_item]  # Remove the item
-            st.experimental_rerun()  # Rerun app to reflect changes
-else:
-    st.sidebar.write("Your order is empty.")
+    for ordered_item, quantity in st.session_state.order.items():
+        col1, col2 = st.sidebar.columns([2, 1])
+        col1.write(f"{ordered_item} {quantity}x")
+        
+        # Button to remove an item
+        if col2.button("Remove", key=f"remove_{ordered_item}"):
+            del st.session_state.order[ordered_item]
+            st.experimental_rerun()
 
-# Button to finalize and export order to Excel
-if st.sidebar.button("Place Order"):
-    if st.session_state.order:
-        # Prepare data for Excel
-        order_data = [{"Item": item, "Quantity": quantity} for item, quantity in st.session_state.order.items()]
-        df = pd.DataFrame(order_data)
-        
-        # Add a timestamped row to track each group order
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        df["Order Time"] = current_time
-        
-        # Excel file path
-        excel_file = "Order.xlsx"
-        
-        # Check if the file exists and update it, or create a new one
-        if os.path.exists(excel_file):
-            with pd.ExcelWriter(excel_file, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
-                workbook = load_workbook(excel_file)
-                sheet = workbook.active
-                start_row = sheet.max_row + 2  # Leave space between previous and new order
-                df.to_excel(writer, index=False, header=False, startrow=start_row)
+    # Order button
+    if st.sidebar.button("Place Order"):
+        # Add order to Excel file
+        order_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        order_data = [{"Item": item, "Quantity": quantity, "Time": order_time} for item, quantity in st.session_state.order.items()]
+
+        # Append to existing Excel file or create a new one
+        if os.path.exists(excel_file_path):
+            with pd.ExcelWriter(excel_file_path, mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
+                pd.DataFrame(order_data).to_excel(writer, sheet_name="Orders", index=False, header=False, startrow=writer.sheets['Orders'].max_row)
         else:
-            df.to_excel(excel_file, index=False, engine="openpyxl")
-        
-        st.sidebar.success("Your order has been placed and saved to Excel!")
-        st.session_state.order = {}  # Clear the order
-        st.experimental_rerun()
-    else:
-        st.sidebar.warning("Your order is empty. Add some items before placing the order!")
+            pd.DataFrame(order_data).to_excel(excel_file_path, sheet_name="Orders", index=False)
+
+        # Clear the cart
+        st.session_state.order = {}
+        st.success("Your order has been placed! Thank you!")
+
+else:
+    st.sidebar.write("Your cart is empty. Start adding items!")
+
+# --- Footer ---
+st.sidebar.write("---")
+st.sidebar.write("Thank you for visiting DELIS BURGER!")
