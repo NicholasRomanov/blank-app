@@ -1,111 +1,101 @@
-import os
 import streamlit as st
 import pandas as pd
-from openpyxl import Workbook
+import os
+from openpyxl import load_workbook
 from datetime import datetime
 
-# Path to Excel file
-excel_file_path = os.path.join(os.getcwd(), "Orders.xlsx")
-
-# Menu items with images
+# Define the menu items (nested dictionaries with item names and image paths)
 menu_items = {
     "Burgers": {
-        "Classic Burger": "Burger.png",
-        "Cheese Burger": "CheeseBurger.png",
-        "Chicken Burger": "ChickenBurger.png",
-        "Double Cheese Burger": "DoubleCheese.png",
-        "MEGA BURGER": "MEGABurger.png"
+        "Classic Burger": "images/Burger.png",
+        "Cheese Burger": "images/CheeseBurger.png",
+        "Chicken Burger": "images/ChickenBurger.png",
+        "Double Cheese Burger": "images/DoubleCheese.png",
+        "MEGA BURGER": "images/MEGABurger.png"
     },
     "Drinks": {
-        "Coca-Cola": "CocaCola.png",
-        "Sprite": "Sprite.png",
-        "Lemon Tea": "LemonTea.png",
-        "Milo": "Milo.png",
-        "Aer putih": "Aer.png"
+        "Coca-Cola": "images/CocaCola.png",
+        "Sprite": "images/Sprite.png",
+        "Lemon Tea": "images/LemonTea.png",
+        "Milo": "images/Milo.png",
+        "Aer putih": "images/Aer.png"
     },
     "Snacks": {
-        "Kebab": "Kebab.png",
-        "Nugget": "Nugget.png",
-        "Nugget (L)": "Lnugget.png",
-        "Salad": "Salad.png",
-        "Chicken Wings": "Wing.png"
+        "Kebab": "images/Kebab.png",
+        "Nugget": "images/Nugget.png",
+        "Nugget (L)": "images/Lnugget.png",
+        "Salad": "images/Salad.png",
+        "Chicken Wings": "images/Wing.png"
     }
 }
 
-# Initialize the order in session state
+# Initialize order in session state
 if 'order' not in st.session_state:
     st.session_state.order = {}
 
-# Display a banner image
-st.image("Img/BurgerBanner.jpg", use_container_width=True)
+# Banner
+st.image("images/Banner.jpg", use_column_width=True)
+st.title("Welcome to McDonald's App")
 
-# Sidebar title
-st.sidebar.title("McDonald's Menu")
-selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
+# Sidebar for Navigation
+st.sidebar.title("Menu Categories")
+selected_category = st.sidebar.radio("Choose a category:", list(menu_items.keys()))
 
-# Title for the selected category
-st.title(selected_category)
-
-# Display menu items with images and add-to-order buttons
-for item, img_path in menu_items[selected_category]:
-    col1, col2 = st.columns([1, 3])  # Two columns for image and name/button
+# Display selected category items with images and buttons
+st.header(f"{selected_category}")  # Header for the selected category
+for item, img_path in menu_items[selected_category].items():
+    col1, col2 = st.columns([1, 3])  # Two columns: image and text/button
+    
     with col1:
-        st.image(img_path, width=100)
+        st.image(img_path, width=100)  # Display the item's image
+    
     with col2:
-        st.write(f"**{item}**")  # Display item name in bold
-        if st.button(f"Add {item}", key=f"add-{item}"):  # Add unique keys for buttons
+        st.write(f"**{item}**")  # Display the item name in bold
+        if st.button(f"Add {item}", key=f"add-{item}"):  # Unique key for each button
             if item in st.session_state.order:
-                st.session_state.order[item] += 1
+                st.session_state.order[item] += 1  # Increment quantity
             else:
-                st.session_state.order[item] = 1
-            st.success(f"{item} added to your order!")
+                st.session_state.order[item] = 1  # Add item to order
+            st.success(f"{item} has been added to your order.")
 
-# Sidebar to show the current order
+# Sidebar: Display current order and removal buttons
 st.sidebar.header("Your Order")
 if st.session_state.order:
-    for ordered_item, quantity in st.session_state.order.items():
-        col1, col2 = st.sidebar.columns([2, 1])
-        col1.write(f"{ordered_item} {quantity}x")
-        
-        # Add unique key for each remove button
-        if col2.button("Remove", key=f"remove-{ordered_item}"):
-            del st.session_state.order[ordered_item]
-            st.success(f"{ordered_item} has been removed from your order.")
-            st.experimental_rerun()  # Refresh the app to update order display
+    for ordered_item, quantity in list(st.session_state.order.items()):
+        col1, col2 = st.sidebar.columns([2, 1])  # Two columns for displaying and removing
+        col1.write(f"{ordered_item} x{quantity}")  # Display item and quantity
+        if col2.button("Remove", key=f"remove-{ordered_item}"):  # Unique key for removal
+            del st.session_state.order[ordered_item]  # Remove the item
+            st.experimental_rerun()  # Rerun app to reflect changes
 else:
     st.sidebar.write("Your order is empty.")
 
-# Order Now button at the bottom of the sidebar
-if st.sidebar.button("Order Now"):
+# Button to finalize and export order to Excel
+if st.sidebar.button("Place Order"):
     if st.session_state.order:
-        # Convert the order to a DataFrame and add a timestamp
+        # Prepare data for Excel
         order_data = [{"Item": item, "Quantity": quantity} for item, quantity in st.session_state.order.items()]
-        order_id = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        for row in order_data:
-            row["Order ID"] = order_id
-
         df = pd.DataFrame(order_data)
-
-        # Append the order to an existing Excel file
-        try:
-            if os.path.exists(excel_file_path):
-                with pd.ExcelWriter(excel_file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-                    startrow = writer.sheets['Sheet1'].max_row
-                    df.to_excel(writer, index=False, header=False, startrow=startrow)
-            else:
-                with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
-                    df.to_excel(writer, index=False)
-
-        except Exception as e:
-            st.error(f"Error saving order: {e}. Creating a new file.")
-            wb = Workbook()
-            wb.save(excel_file_path)
-            with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False)
-
-        # Success message and clear the order
-        st.sidebar.success("Your order has been placed!")
-        st.sidebar.markdown(f"[Download Orders Excel File](Orders.xlsx)")
-        st.session_state.order = {}
+        
+        # Add a timestamped row to track each group order
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        df["Order Time"] = current_time
+        
+        # Excel file path
+        excel_file = "Order.xlsx"
+        
+        # Check if the file exists and update it, or create a new one
+        if os.path.exists(excel_file):
+            with pd.ExcelWriter(excel_file, engine="openpyxl", mode="a", if_sheet_exists="overlay") as writer:
+                workbook = load_workbook(excel_file)
+                sheet = workbook.active
+                start_row = sheet.max_row + 2  # Leave space between previous and new order
+                df.to_excel(writer, index=False, header=False, startrow=start_row)
+        else:
+            df.to_excel(excel_file, index=False, engine="openpyxl")
+        
+        st.sidebar.success("Your order has been placed and saved to Excel!")
+        st.session_state.order = {}  # Clear the order
+        st.experimental_rerun()
     else:
-        st.sidebar.warning("Your cart is empty. Please add items before ordering.")
+        st.sidebar.warning("Your order is empty. Add some items before placing the order!")
