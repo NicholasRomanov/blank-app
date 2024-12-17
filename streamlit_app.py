@@ -34,7 +34,7 @@ if 'order' not in st.session_state:
     st.session_state.order = {}
 
 # Banner
-st.image("images/Banner.jpg", use_column_width=True)
+st.image("images/Banner.jpg", use_container_width=True)
 st.title("Welcome to McDonald's App")
 
 # Sidebar for Navigation
