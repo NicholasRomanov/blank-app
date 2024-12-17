@@ -97,7 +97,7 @@ if st.session_state.order:
 
         # Clear the cart
         st.session_state.order = {}
-        st.success("Your order has been placed! Thank you!")
+        st.sidebar.success("Your order has been placed! Thank you!")
 
 else:
     st.sidebar.write("Your cart is empty. Start adding items!")
