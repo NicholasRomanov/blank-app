@@ -1,27 +1,13 @@
-import streamlit as st
 import os
+import streamlit as st
 import pandas as pd
 from openpyxl import Workbook
 from datetime import datetime
 
-st.title("Selamat datang Di DELIS BURGER")
+# Path to Excel file
+excel_file_path = os.path.join(os.getcwd(), "Orders.xlsx")
 
-# ini buat folder gambar
-img_folder = os.path.join(os.getcwd(), "Img")
-
-# folder excel
-excel_file_path = os.path.join(os.getcwd(), "Order.xlsx")
-
-# ini gambar banner
-banner_path = os.path.join(img_folder, "BurgerBanner.jpg")
-
-# letak banner
-if os.path.exists(banner_path):  # Check if the banner image exists
-    st.image(banner_path, use_container_width=True)
-else:
-    st.error("Banner image not found!")
-
-# isi menu ama gambarnya
+# Menu items with images
 menu_items = {
     "Burgers": {
         "Classic Burger": "Burger.png",
@@ -46,51 +32,80 @@ menu_items = {
     }
 }
 
-# ini tempat order kosong
+# Initialize the order in session state
 if 'order' not in st.session_state:
     st.session_state.order = {}
 
-# navigasi sidebar
-st.sidebar.title("Menu List")
+# Display a banner image
+st.image("Img/BurgerBanner.jpg", use_container_width=True)
+
+# Sidebar title
+st.sidebar.title("McDonald's Menu")
 selected_category = st.sidebar.radio("Select a category:", list(menu_items.keys()))
 
-# category barang
+# Title for the selected category
 st.title(selected_category)
 
-# ni ngedisplay nama file ama gabar nya
-for item, image_file in menu_items[selected_category].items():
-    # ini folder path gambar menu
-    image_path = os.path.join(img_folder, image_file)
-    col1, col2 = st.columns([1, 3])  # layoutnya
+# Display menu items with images and add-to-order buttons
+for item, img_path in menu_items[selected_category]:
+    col1, col2 = st.columns([1, 3])  # Two columns for image and name/button
     with col1:
-        if os.path.exists(image_path):  # check gambar
-            st.image(image_path, width=100)  # display
-        else:
-            st.error(f"Image for {item} not found!")
+        st.image(img_path, width=100)
     with col2:
-        st.write(f"**{item}**")
-        if st.button(f"Add {item} to Order", key=f"add_{item}"):
-            st.session_state.order[item] = st.session_state.order.get(item, 0) + 1
-            st.success(f"{item} has been added to your order!")
+        st.write(f"**{item}**")  # Display item name in bold
+        if st.button(f"Add {item}", key=f"add-{item}"):  # Add unique keys for buttons
+            if item in st.session_state.order:
+                st.session_state.order[item] += 1
+            else:
+                st.session_state.order[item] = 1
+            st.success(f"{item} added to your order!")
 
-# ngasih liat order di sidebar
+# Sidebar to show the current order
 st.sidebar.header("Your Order")
 if st.session_state.order:
-    items_to_remove = []  # list sementara buat diapus
     for ordered_item, quantity in st.session_state.order.items():
         col1, col2 = st.sidebar.columns([2, 1])
-        col1.write(  f"{ordered_item} {quantity}x")
-
-        if col2.button("Remove", key=f"remove-{ordered_item}"):  
-            del st.session_state.order[ordered_item]  # Remove the item from the order
+        col1.write(f"{ordered_item} {quantity}x")
+        
+        # Add unique key for each remove button
+        if col2.button("Remove", key=f"remove-{ordered_item}"):
+            del st.session_state.order[ordered_item]
             st.success(f"{ordered_item} has been removed from your order.")
-
-    # buat ngapus order
-    for item in items_to_remove:
-        del st.session_state.order[item]
-
-    # kalo koson ini keluar
-    if not st.session_state.order:
-        st.sidebar.write("Your cart is now empty.")
+            st.experimental_rerun()  # Refresh the app to update order display
 else:
-    st.sidebar.write("Your cart is empty. Start adding items!")
+    st.sidebar.write("Your order is empty.")
+
+# Order Now button at the bottom of the sidebar
+if st.sidebar.button("Order Now"):
+    if st.session_state.order:
+        # Convert the order to a DataFrame and add a timestamp
+        order_data = [{"Item": item, "Quantity": quantity} for item, quantity in st.session_state.order.items()]
+        order_id = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for row in order_data:
+            row["Order ID"] = order_id
+
+        df = pd.DataFrame(order_data)
+
+        # Append the order to an existing Excel file
+        try:
+            if os.path.exists(excel_file_path):
+                with pd.ExcelWriter(excel_file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                    startrow = writer.sheets['Sheet1'].max_row
+                    df.to_excel(writer, index=False, header=False, startrow=startrow)
+            else:
+                with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False)
+
+        except Exception as e:
+            st.error(f"Error saving order: {e}. Creating a new file.")
+            wb = Workbook()
+            wb.save(excel_file_path)
+            with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False)
+
+        # Success message and clear the order
+        st.sidebar.success("Your order has been placed!")
+        st.sidebar.markdown(f"[Download Orders Excel File](Orders.xlsx)")
+        st.session_state.order = {}
+    else:
+        st.sidebar.warning("Your cart is empty. Please add items before ordering.")
