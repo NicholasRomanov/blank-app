@@ -93,7 +93,6 @@ if st.session_state.order:
                 # Button to remove an item
                 if col2.button("Remove", key=f"remove_{ordered_item}"):
                     del st.session_state.order[ordered_item]
-                    st.experimental_rerun()
 
     # Display total price above the "Order Now" button
     st.sidebar.subheader(f"Total: ${total_price:.3f}")
