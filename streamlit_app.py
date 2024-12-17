@@ -102,7 +102,20 @@ if st.session_state.order:
     if st.sidebar.button("Place Order"):
         # Add order to Excel file
         order_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        order_data = [{"Item": item, "Quantity": quantity, "Time": order_time, "Price": menu_items[category][item]["price"]} for item, quantity in st.session_state.order.items()]
+        
+        # Correct order data construction
+        order_data = []
+        for item, quantity in st.session_state.order.items():
+            for category, items in menu_items.items():
+                if item in items:
+                    price = items[item]["price"]
+                    order_data.append({
+                        "Item": item,
+                        "Quantity": quantity,
+                        "Time": order_time,
+                        "Price": price
+                    })
+                    break  # Exit loop once the item is found
 
         # Append to existing Excel file or create a new one
         if os.path.exists(excel_file_path):
@@ -117,8 +130,8 @@ if st.session_state.order:
         # Show success message in the sidebar
         st.sidebar.success("Your order has been placed! Thank you!")
 
-        # Force a page refresh to simulate a new customer session
-        st.experimental_rerun()
+        st.sidebar.info("Refresh the page to start a new order!")
+
 else:
     st.sidebar.write("Your cart is empty. Start adding items!")
 
