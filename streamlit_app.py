@@ -67,7 +67,7 @@ for item, item_data in menu_items[selected_category].items():
         else:
             st.error(f"Image for {item} not found!")
     with col2:
-        st.write(f"**{item}** - ${price:.3f}")
+        st.write(f"**{item}** - Rp.{price:.3f}")
         if st.button(f"Add {item} to Order", key=f"add_{item}"):
             st.session_state.order[item] = st.session_state.order.get(item, 0) + 1
             st.success(f"{item} has been added to your order!")
@@ -75,10 +75,11 @@ for item, item_data in menu_items[selected_category].items():
 # --- Display Cart in Sidebar ---
 st.sidebar.header("Your Order")
 total_price = 0  # Initialize total price
+items_to_remove = []  # Temporary list to store items for removal
 
 if st.session_state.order:
     for ordered_item, quantity in st.session_state.order.items():
-        # Get item details (price, image)
+        # Get item details (price)
         for category, items in menu_items.items():
             if ordered_item in items:
                 price = items[ordered_item]["price"]
@@ -88,21 +89,25 @@ if st.session_state.order:
                 # Display item name, quantity, and price in the sidebar
                 col1, col2 = st.sidebar.columns([2, 1])
                 col1.write(f"{ordered_item} {quantity}x")
-                col2.write(f"${item_total:.3f}")
+                col2.write(f"Rp.{item_total:.3f}")
 
-                # Button to remove an item
+                # Button to remove an item (mark for removal)
                 if col2.button("Remove", key=f"remove_{ordered_item}"):
-                    del st.session_state.order[ordered_item]
+                    items_to_remove.append(ordered_item)
+
+    # Remove items after iterating
+    for item in items_to_remove:
+        del st.session_state.order[item]
 
     # Display total price above the "Order Now" button
-    st.sidebar.subheader(f"Total: ${total_price:.3f}")
+    st.sidebar.subheader(f"Total: Rp.{total_price:.3f}")
 
     # Order button
     if st.sidebar.button("Place Order"):
         # Add order to Excel file
         order_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Correct order data construction
+        # Prepare order data
         order_data = []
         for item, quantity in st.session_state.order.items():
             for category, items in menu_items.items():
@@ -114,7 +119,7 @@ if st.session_state.order:
                         "Time": order_time,
                         "Price": price
                     })
-                    break  # Exit loop once the item is found
+                    break
 
         # Append to existing Excel file or create a new one
         if os.path.exists(excel_file_path):
@@ -128,7 +133,6 @@ if st.session_state.order:
         
         # Show success message in the sidebar
         st.sidebar.success("Your order has been placed! Thank you!")
-
         st.sidebar.info("Refresh the page to start a new order!")
 
 else:
